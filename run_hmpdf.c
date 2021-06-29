@@ -2,6 +2,7 @@
 //      [1] source redshift (float)
 //      [2] file w/ edges   (char *)
 //      [3] outfile name    (char *)
+//      [4] hydro           (int)
 
 #include <stdio.h>
 #include <stdlib.h>
