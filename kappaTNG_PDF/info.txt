@@ -1,0 +1,8 @@
+There are 2 folders: hydro and DMO, each has 3 files for 3 smoothing scales: 1, 2, 5 arcmin.
+Each file can be opend with:
+data = np.load(filename)
+data has shape [40, 300, 3] for 
+40 redshifts (listed in zs.dat)
+300 kappa bins
+3 columns: kappa, PDF, std(PDF), where std is over 10,000 realizations
+Maps size 3.5x3.5 deg^2
