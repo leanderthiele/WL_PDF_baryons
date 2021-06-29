@@ -1,4 +1,4 @@
-export PATHTOHMPDF=/home/leander/Perimeter/Onepoint/C_implementation
+export PATHTOHMPDF=/home/leander/Princeton/hmpdf
 gcc -std=gnu99 -O3 -g3 -I${PATHTOHMPDF}/include \
   -Wall -Wextra -Wpedantic                      \
   -o run_hmpdf run_hmpdf.c                      \
