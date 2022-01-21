@@ -43,9 +43,12 @@ for ii, zsource in enumerate(zs) :
             print('---------------' +
                   ('HYDRO' if hydro else 'DMO')
                   + '---------------')
-            system('./run_hmpdf %.4f %s %s %d'%(zsource, edg_file,
-                                                tmp_file_hydro if hydro else tmp_file_DMO,
-                                                hydro))
+            mcuts_file = 'hmpdf_ws/mass_cuts_DMO.txt' # DMO is the 'ficticious' mass we integrate over
+            cmd = './run_hmpdf %.4f %s %s %s %d'%(zsource, edg_file, mcuts_file,
+                                                  tmp_file_hydro if hydro else tmp_file_DMO,
+                                                  hydro)
+            print(cmd)
+            system(cmd)
 
     theory_hydro[ii, :] = np.loadtxt(tmp_file_hydro)
     theory_DMO[ii, :]   = np.loadtxt(tmp_file_DMO)

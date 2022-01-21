@@ -1,14 +1,16 @@
 // Command line arguments :
-//      [1] source redshift (float)
-//      [2] file w/ edges   (char *)
-//      [3] outfile name    (char *)
-//      [4] hydro           (int)
+//      [1] source redshift   (float)
+//      [2] file w/ edges     (char *)
+//      [3] file w/ mass cuts (char *)
+//      [4] outfile name      (char *)
+//      [5] hydro             (int)
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 
 #include <gsl/gsl_math.h>
+#include <gsl/gsl_interp.h>
 
 #include "hmpdf.h"
 #include "utils.h"
@@ -83,22 +85,51 @@ conc_DM[] = { 5.71, -0.087, -0.47,
 static double
 conc_hydro[] = { 5.71, -0.087, -0.47,
                  7.85, -0.081, -0.71,
-                 /*12.79550921*/ 12.0,
-                    -0.08862842, -0.84718926,  0.02557855,  0.59983028,  1.09660615 };
+                 12.79550921,
+                 -0.08862842, -0.84718926,  0.02557855,  0.59983028,  1.09660615 };
+
+// define the mass cuts function
+static double
+mass_cuts(double z, void *p)
+{
+    double out;
+    interp1d *i = (interp1d *)p;
+
+    if (interp1d_eval(i, z, &out))
+        printf("interp1d_eval failed in mass_cuts\n");
+
+    // did interpolation in log
+    return exp(out);
+}
 
 int
 main(int argc, char **argv)
 {
     double zs = atof(argv[1]);
     char *edg = argv[2];
-    char *out = argv[3];
-    int hydro = atoi(argv[4]);
+    char *mcut = argv[3];
+    char *out = argv[4];
+    int hydro = atoi(argv[5]);
 
     // load the binedges
     int Nbins;
-    double **x = loadtxt(edg, &Nbins, 1);
+    double **x0 = loadtxt(edg, &Nbins, 1);
     Nbins -= 1;
-    double *binedges = x[0];
+    double *binedges = x0[0];
+
+    // interpolate the mass cuts
+    int Nz;
+    double **x1 = loadtxt(mcut, &Nz, 2);
+    double *mcuts_z = x1[0];
+    double *mcuts_M = x1[1];
+    // better to interpolate in log I believe
+    for (int ii=0; ii<Nz; ii++)
+        mcuts_M[ii] = log(mcuts_M[ii]);
+    // NOTE that mass cuts is not called in parallel so no need for separate accelerators
+    interp1d *mcuts_interpolator;
+    if (new_interp1d(Nz, mcuts_z, mcuts_M, mcuts_M[0], mcuts_M[Nz-1],
+                     interp_linear, NULL, &mcuts_interpolator))
+        printf("new_interp1d failed\n");
 
     hmpdf_obj *d = hmpdf_new();
     if (!(d))
@@ -112,7 +143,11 @@ main(int argc, char **argv)
                    hmpdf_Duffy08_conc_params, (hydro) ? conc_hydro : conc_DM,
 //                   hmpdf_massfunc_corr, (hydro) ? &hydro_hmf_corr : NULL,
 //                   hmpdf_conc_resc, (hydro) ? &hydro_conc_resc : NULL,
+//                   NOTE it is possible that the implementation of conc_resc in hmpdf
+//                        is buggy
                    hmpdf_mass_resc, (hydro) ? &mass_resc : NULL,
+//                   hmpdf_mass_cuts, &mass_cuts,
+//                   hmpdf_mass_cuts_params, (void *)mcuts_interpolator,
                    hmpdf_custom_k_filter, &k_filter,
                    hmpdf_signal_max, 3.0*binedges[Nbins],
                    hmpdf_N_signal, 4096,

@@ -22,13 +22,17 @@ def edges(centres) :
 
 for ii, zsource in enumerate(zs) :
     edg_file = 'hmpdf_ws/edges_zs%.4f.dat'%zsource
+    mcuts_file = 'hmpdf_ws/mass_cuts_%s.txt'%('hydro' if 'hydro' else 'DMO')
+
     if not isfile(edg_file) :
         binedges = edges(sim_DMO[ii, :, 0])
         np.savetxt(edg_file, binedges)
 
     tmp_file = 'hmpdf_ws/op_zs%.4f.dat'%zsource
 
-    system('./run_hmpdf %.4f %s %s %d'%(zsource, edg_file, tmp_file, hydro))
+    cmd = './run_hmpdf %.4f %s %s %s %d'%(zsource, edg_file, mcuts_file, tmp_file, hydro)
+    print(cmd)
+    system(cmd)
 
     theory[ii, :] = np.loadtxt(tmp_file)
 
