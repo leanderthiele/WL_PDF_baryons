@@ -3,14 +3,13 @@
 #ifndef PARAMS_ARICO_H
 #define PARAMS_ARICO_H
 
-#define ARICO20
-
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "hdf5/serial/hdf5.h"
+#include "hdf5.h"
 
+#define ARICO20
 #include "hmpdf.h"
 
 // the simulation, don't change order

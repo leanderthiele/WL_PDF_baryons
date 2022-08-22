@@ -1,5 +1,7 @@
+
 #include <stdlib.h>
 
+#define ARICO20
 #include "hmpdf.h"
 #include "utils.h"
 
