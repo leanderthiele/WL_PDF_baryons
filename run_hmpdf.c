@@ -4,6 +4,14 @@
 //      [3] file w/ mass cuts (char *)
 //      [4] outfile name      (char *)
 //      [5] hydro             (int)
+//      [6] simulation        (int) -- 0=TNG, 1=BAHAMAS_fid, 2=BAHAMAS_loAGN, 3=BAHAMAS_hiAGN
+//      [7] BCM data          (int) -- 0=PK, 1=QK, 2=PK+QK
+
+// If ARICO20 is defined, use the updated 8-parameter BCM
+#define ARICO20
+
+// If SPLIT is defined, use separate NFW profiles for DM and baryons
+// #define SPLIT
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,6 +22,8 @@
 
 #include "hmpdf.h"
 #include "utils.h"
+
+#include "params_arico.h"
 
 double
 k_filter(double k, double z, void *p)
@@ -70,23 +80,52 @@ mass_resc(double z, double M, void *p)
 {
     (void)p;
     M = log(M/2e12);
-    return 1.0 + mass_resc_params[0]
-                 * pow(1.0+z, mass_resc_params[1])
-                 * exp( mass_resc_params[2]
-                        * gsl_pow_2(M - mass_resc_params[3]) );
+    double out = 1.0 + mass_resc_params[0]
+                       * pow(1.0+z, mass_resc_params[1])
+                       * exp( mass_resc_params[2]
+                             * gsl_pow_2(M - mass_resc_params[3]) );
+
+    return out;
 }
 
 // define the concentration model
+
+static double
+conc_Duffy08[] = { 5.71, -0.087, -0.47,
+                   7.85, -0.081, -0.71,
+                  10.14, -0.081, -1.01, 0.0, 0.0, 0.0 };
+
+// FIXME update
+// concentration in hydro simulation (total matter)
+static double
+conc_hydro_tot[] = { 5.71, -0.087, -0.47,
+                     7.85, -0.081, -0.71,
+                     1.375023001e+01, -8.688706e-02, -8.4451454e-01,
+                     2.705265e-02, 5.2513069e-01, 1.12049399e+00 };
+
+// FIXME update
+// concentration in DMO simulation
 static double
 conc_DM[] = { 5.71, -0.087, -0.47,
               7.85, -0.081, -0.71,
-              1.29729068e+01, -7.05810865e-02, -1.07969465e+00,  5.92621692e-04, 4.23256450e-01, -7.01235269e+00 };
+              1.29729068e+01, -7.05810865e-02, -1.07969465e+00, 
+              5.92621692e-04, 4.23256450e-01, -7.01235269e+00 };
 
+// this only refers to the DM component
 static double
-conc_hydro[] = { 5.71, -0.087, -0.47,
-                 7.85, -0.081, -0.71,
-                 12.79550921,
-                 -0.08862842, -0.84718926,  0.02557855,  0.59983028,  1.09660615 };
+conc_hydro_DM[] = { 5.71, -0.087, -0.47,
+                    7.85, -0.081, -0.71,
+                    1.29506089e+01, -8.866189e-02, -8.6722558e-02,
+                    2.486489e-02, 5.510048e-01, 1.11423926e+00 };
+
+// this only refers to the baryonic component -- only need this in terms of the internal mass
+// FIXME need to write code for this!
+static double
+conc_hydro_bar[] = { 5.71, -0.087, -0.47,
+                     7.85, -0.081, -0.71,
+                     4.57478936e+00, -1.67755068e+00, -2.84129704e+00,
+                     4.90993037e-04, -1.16223295e+01, -6.83565016e+00 };
+                     
 
 // define the mass cuts function
 static double
@@ -102,14 +141,30 @@ mass_cuts(double z, void *p)
     return exp(out);
 }
 
+// define the bias rescaling function
+static double
+bias_resc(double z, double M, void *p)
+{
+    (void)p;
+    return 0.1;
+}
+
 int
 main(int argc, char **argv)
 {
+#ifdef SPLIT
+    printf("Using the 2-component NFW profiles, no BCM!\n");
+#else
+    printf("Using the BCM model\n");
+#endif
+
     double zs = atof(argv[1]);
     char *edg = argv[2];
     char *mcut = argv[3];
     char *out = argv[4];
     int hydro = atoi(argv[5]);
+    enum SIM sim = atoi(argv[6]);
+    enum OBS obs = atoi(argv[7]);
 
     // load the binedges
     int Nbins;
@@ -131,30 +186,74 @@ main(int argc, char **argv)
                      interp_linear, NULL, &mcuts_interpolator))
         printf("new_interp1d failed\n");
 
+#ifndef SPLIT
+    // set the Arico BCM
+    double params_Arico[80];
+    int Nz_Arico;
+    double z_Arico[10];
+    populate_params(&Nz_Arico, z_Arico, params_Arico, sim, obs);
+#endif // SPLIT
+
     hmpdf_obj *d = hmpdf_new();
     if (!(d))
         return 1;
 
-    if (hmpdf_init(d, "./illustris_cosmo.ini",
+    char ini_file[64];
+    if (sim == TNG)
+        sprintf(ini_file, "./illustris_cosmo.ini");
+    else if (sim==BAHAMAS_fid || sim==BAHAMAS_hiAGN || sim==BAHAMAS_loAGN)
+        sprintf(ini_file, "./bahamas_cosmo.ini");
+
+    // need to use the function here to be able to have preprocessor directives inside call
+    if (hmpdf_init_fct(d, ini_file,
                    hmpdf_kappa, zs,
 
+                   hmpdf_rout_scale, 2.5,
+
+                   // TODO we don't have the Gaussian filter applied to the maps included here!!!
+                   // It is W(\theta) \propto \exp(-\theta / \theta_G) where \theta_G=1 arcmin
+                   // We need the FWHM of this filter
+                   // FIXME for some reason this suppresses the PDF *way* too much compared to the
+                   //       sims! (even when I take out the k-filter)
+                   // TODO if I manually decrease the filter size by \pi, the PDFs look fairly reasonable
+                   //      with very good agreement at large zs and visibly worse for zs~0.5
+                   hmpdf_gaussian_fwhm, (sim==TNG) ? 2.0 * sqrt(M_LN2) * 1.0 : 1e-3/*some small value*/,
+
+//                   hmpdf_warn_is_err, 0,
+
+#ifndef SPLIT
+                   hmpdf_Arico20_Nz, Nz_Arico,
+                   hmpdf_Arico20_z, z_Arico,
+                   hmpdf_Arico20_params, (hydro) ? params_Arico : NULL,
+#endif // SPLIT
+
                    hmpdf_N_threads, 4,
-                   hmpdf_pixel_side, 0.29,
-                   hmpdf_Duffy08_conc_params, (hydro) ? conc_hydro : conc_DM,
-//                   hmpdf_massfunc_corr, (hydro) ? &hydro_hmf_corr : NULL,
-//                   hmpdf_conc_resc, (hydro) ? &hydro_conc_resc : NULL,
-//                   NOTE it is possible that the implementation of conc_resc in hmpdf
-//                        is buggy
+                   hmpdf_pixel_side, (sim==TNG) ? 0.29 : 0.1*0.882, // == 5 deg / 1024 pixels
+
+#ifndef SPLIT
+                   hmpdf_Duffy08_conc_params, (sim==TNG) ? conc_DM : conc_Duffy08,
+#else
+                   // in hydro case, we use the concentration for the total profile for mass conversions only
+                   hmpdf_Duffy08_conc_params, (hydro) ? conc_hydro_tot : conc_DM,
+                   hmpdf_DM_conc_params, (hydro) ? conc_hydro_DM : NULL,
+                   hmpdf_bar_conc_params, (hydro) ? conc_hydro_bar : NULL,
                    hmpdf_mass_resc, (hydro) ? &mass_resc : NULL,
+#endif // SPLIT
+//                   hmpdf_massfunc_corr, (hydro) ? &hydro_hmf_corr : NULL,
+//                 NOTE that the massfunc_corr seems to give very similar results to the mass rescaling,
+//                      which is encouraging
+//                   hmpdf_conc_resc, (hydro) ? &hydro_conc_resc : NULL,
 //                   hmpdf_mass_cuts, &mass_cuts,
 //                   hmpdf_mass_cuts_params, (void *)mcuts_interpolator,
-                   hmpdf_custom_k_filter, &k_filter,
+//                   hmpdf_bias_resc, (hydro) ? &bias_resc : NULL,
+                   hmpdf_custom_k_filter, (sim==TNG) ? &k_filter : NULL,
                    hmpdf_signal_max, 3.0*binedges[Nbins],
                    hmpdf_N_signal, 4096,
-                   hmpdf_N_M, 100,
-                   hmpdf_N_z, 100,
+//                   hmpdf_N_M, 100,
+//                   hmpdf_N_z, 100,
                    hmpdf_N_theta, 300,
-                   hmpdf_verbosity, 0))
+                   hmpdf_verbosity, 0,
+                   hmpdf_end_configs))
         return 2;
 
     double op[Nbins];
