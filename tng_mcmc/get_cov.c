@@ -46,12 +46,24 @@ int main (int argc, char **argv)
 
     double *cov = malloc(Nbins * Nbins * sizeof(double));
     status = hmpdf_get_cov(d, Nbins, binedges, cov, 0);
+    if (status)
+        return 4;
 
     sprintf(buffer, "cov_%s_zs%.4f.bin", (hydro) ? "hydro" : "DMO", zs);
     tofile(buffer, Nbins*Nbins, 1, cov);
 
+    // get some diagnostics for debugging
+    int Nphi;
+    double *phi, *phiweights, *corr_diagn;
+    status = hmpdf_get_cov_diagnostics(d, &Nphi, &phi, &phiweights, &corr_diagn);
+    if (status)
+        return 5;
+
+    sprintf(buffer, "cov_diagn_%s_zs%.4f.bin", (hydro) ? "hydro" : "DMO", zs);
+    tofile(buffer, Nphi, 3, phi, phiweights, corr_diagn);
+
     status = hmpdf_delete(d);
     if (status)
-        return 4;
-    free(cov);
+        return 6;
+    free(cov); free(phi); free(phiweights); free(corr_diagn);
 }
