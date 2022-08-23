@@ -248,7 +248,7 @@ main(int argc, char **argv)
 //                   hmpdf_bias_resc, (hydro) ? &bias_resc : NULL,
                    hmpdf_custom_k_filter, (sim==TNG) ? &k_filter : NULL,
                    hmpdf_signal_max, 3.0*binedges[Nbins],
-                   hmpdf_N_signal, 4096,
+                   hmpdf_N_signal, 4096L,
 //                   hmpdf_N_M, 100,
 //                   hmpdf_N_z, 100,
                    hmpdf_N_theta, 300,

@@ -41,8 +41,11 @@ init_hmpdf (hmpdf_obj *d, double zs ,double *params_Arico, int Nz_Arico, double 
                         hmpdf_Duffy08_conc_params, conc_DM,
                         hmpdf_custom_k_filter, &k_filter,
                         hmpdf_signal_max, 0.6,
-                        hmpdf_N_signal, 4096,
                         hmpdf_N_theta, 300,
+                        /* for covariance matrix stability */
+                        hmpdf_N_signal, 2048L,
+                        hmpdf_N_phi, 3000,
+                        hmpdf_phi_pwr, 5.0,
                         hmpdf_verbosity, 1);
 
     if (status)
