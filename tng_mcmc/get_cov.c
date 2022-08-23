@@ -15,10 +15,9 @@ int main (int argc, char **argv)
     int hydro = atoi(argv[1]);
     double zs = atof(argv[2]);
 
-    int Nbins;
-    double **x0 = loadtxt("edges.dat", &Nbins, 1);
-    Nbins -= 1;
-    double *binedges = x0[0];
+    int Nbins = 32;
+    double *binedges = malloc((Nbins+1)*sizeof(double));
+    linspace(Nbins+1, 0.0, 0.2, binedges);
 
     double params_Arico[200];
     int Nz_Arico;
@@ -67,5 +66,5 @@ int main (int argc, char **argv)
     status = hmpdf_delete(d);
     if (status)
         return 6;
-    free(cov); free(phi); free(phiweights); free(corr_diagn);
+    free(binedges); free(cov); free(phi); free(phiweights); free(corr_diagn);
 }
