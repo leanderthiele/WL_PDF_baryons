@@ -37,15 +37,16 @@ init_hmpdf (hmpdf_obj *d, double zs, int for_cov, double *params_Arico, int Nz_A
                         hmpdf_Arico20_Nz, Nz_Arico,
                         hmpdf_Arico20_z, z_Arico,
                         hmpdf_N_threads, (int)(omp_get_max_threads()),
-                        hmpdf_pixel_side, 0.29,
+                        hmpdf_pixel_side, /*FIXME this is to test convergence*/2.0*0.29,
                         hmpdf_Duffy08_conc_params, conc_DM,
                         hmpdf_custom_k_filter, &k_filter,
                         hmpdf_signal_max, 0.6,
-                        hmpdf_N_theta, 300,
+                        hmpdf_N_theta, 1024,
                         /* for covariance matrix stability */
-                        hmpdf_N_signal, (for_cov) ? 1024L : 4096L,
+                        hmpdf_N_signal, (for_cov) ? 512L : 4096L,
                         hmpdf_N_phi, 10000,
                         hmpdf_phi_pwr, 5.0,
+                        hmpdf_phi_jitter, 0.05,
                         hmpdf_verbosity, 1);
 
     if (status)
