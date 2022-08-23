@@ -251,7 +251,11 @@ main(int argc, char **argv)
                    hmpdf_N_signal, 4096L,
 //                   hmpdf_N_M, 100,
 //                   hmpdf_N_z, 100,
-                   hmpdf_N_theta, 300,
+
+                   // N_theta=500 is not completely converged (1000 is, but quite a bit more expensive )
+                   // This is mostly an issue for zs=0.5,
+                   // but even there qualitatively the result is prety converged.
+                   hmpdf_N_theta, 500,
                    hmpdf_verbosity, 0,
                    hmpdf_end_configs))
         return 2;

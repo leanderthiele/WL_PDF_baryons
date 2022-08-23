@@ -110,14 +110,14 @@ for ii, zsource in enumerate(zs) :
     centers = 0.5 * (edges[1:] + edges[:-1])
 
     lsim = ax_res.plot(centers,
-                       (sim_hydro[ii]-sim_DMO[ii])/sim_DMO[ii],
+                       (sim_hydro[ii]-sim_DMO[ii])/(0.5*(sim_DMO[ii]+sim_hydro[ii])),
                        linestyle='solid', label='$z_s = %.2f$'%zsource)
     if sim_BCM is not None :
         ax_res.plot(centers,
-                    (sim_BCM[ii]-sim_DMO[ii])/sim_DMO[ii],
+                    (sim_BCM[ii]-sim_DMO[ii])/(0.5*(sim_DMO[ii]+sim_BCM[ii])),
                     linestyle='dotted', color=plt.getp(lsim[0], 'color'))
     ax_res.plot(centers,
-                (theory_hydro[ii, :]-theory_DMO[ii, :])/theory_DMO[ii],
+                (theory_hydro[ii]-theory_DMO[ii])/(0.5*(theory_DMO[ii]+theory_hydro[ii])),
                 linestyle='dashed', color=plt.getp(lsim[0], 'color'))
 
     for hydro, (sim, theory) in enumerate(zip([sim_DMO, sim_hydro, sim_BCM], [theory_DMO, theory_hydro, None])) :
@@ -138,7 +138,7 @@ ax_log[0].legend()
 ax_res.set_xlim(0.0, 0.2)
 ax_res.set_ylim(-0.3, 0.3)
 ax_res.set_xlabel('convergence $\kappa$')
-ax_res.set_ylabel('$p_{\sf hydro} / p_{\sf DMO} - 1$')
+ax_res.set_ylabel('$2 (p_{\sf hydro} - p_{\sf DMO}) / (p_{\sf hydro} + p_{\sf DMO})$')
 ax_res.legend()
-fig_res.savefig('hydro_vs_DMO.pdf', bbox_inches='tight')
-fig_log.savefig('smoothing_calib.pdf', bbox_inches='tight')
+fig_res.savefig('hydro_vs_DMO_%s_%s.pdf'%(SIM, OBS), bbox_inches='tight')
+fig_log.savefig('smoothing_calib_%s_%s.pdf'%(SIM, OBS), bbox_inches='tight')
