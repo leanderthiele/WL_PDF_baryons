@@ -24,7 +24,7 @@ conc_DM[] = { 5.71, -0.087, -0.47,
               5.92621692e-04, 4.23256450e-01, -7.01235269e+00 };
 
 int
-init_hmpdf (hmpdf_obj *d, double zs ,double *params_Arico, int Nz_Arico, double *z_Arico)
+init_hmpdf (hmpdf_obj *d, double zs, int for_cov, double *params_Arico, int Nz_Arico, double *z_Arico)
 // If params_Arico == NULL, the DMO version is run
 {
     int status;
@@ -43,8 +43,8 @@ init_hmpdf (hmpdf_obj *d, double zs ,double *params_Arico, int Nz_Arico, double 
                         hmpdf_signal_max, 0.6,
                         hmpdf_N_theta, 300,
                         /* for covariance matrix stability */
-                        hmpdf_N_signal, 2048L,
-                        hmpdf_N_phi, 3000,
+                        hmpdf_N_signal, (for_cov) ? 1024L : 4096L,
+                        hmpdf_N_phi, 10000,
                         hmpdf_phi_pwr, 5.0,
                         hmpdf_verbosity, 1);
 

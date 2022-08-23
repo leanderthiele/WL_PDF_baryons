@@ -33,7 +33,7 @@ int main (int argc, char **argv)
 
     int status;
 
-    status = init_hmpdf(d, zs, (hydro) ? params_Arico : NULL, Nz_Arico, z_Arico); 
+    status = init_hmpdf(d, zs, /*for_cov=*/1, (hydro) ? params_Arico : NULL, Nz_Arico, z_Arico); 
     if (status)
         return 2;
 
