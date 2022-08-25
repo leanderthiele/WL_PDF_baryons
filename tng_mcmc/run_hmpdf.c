@@ -35,10 +35,9 @@ int main (int argc, char **argv)
     if (argc != 1/*executable*/ + 1/*outfile*/ + hmpdf_Arico20_Nparams)
         return -1;
     
-    char **c = argv;
+    char **c = argv+1;
 
     char *outfile = *(c++);
-    printf("%s\n", outfile);
 
     double params_Arico[hmpdf_Arico20_Nparams];
     for (int ii=0; ii<hmpdf_Arico20_Nparams; ++ii)
