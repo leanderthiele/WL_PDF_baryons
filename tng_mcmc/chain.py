@@ -21,6 +21,8 @@ KAPPA_MIN = float(argv[2])
 WRITE_PERIOD = 10 # after this many likelihood evaluations the chisq is written to file
 
 OUT_BASE = '/scratch/gpfs/lthiele/BCM_MCMC_TNG_chains_kappamin%.3f'%KAPPA_MIN
+os.makedirs(OUT_BASE, exist_ok=True)
+
 RANK = int(os.environ['SLURM_PROCID'])
 WORLD_SIZE = int(os.environ['SLURM_NTASKS'])
 
