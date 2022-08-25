@@ -113,7 +113,7 @@ def log_probability (theta) :
 
 def get_initial () :
     rng = np.random.default_rng()
-    return np.array([[rng.uniform(*p) for p in theta_priors] for _ in NWALKERS])
+    return np.array([[rng.uniform(*p) for p in theta_priors] for _ in range(NWALKERS)])
 
 with MPIPool() as pool :
     
@@ -133,9 +133,9 @@ with MPIPool() as pool :
             header = f.create_group('Header')
             header.attrs.create('parameters', param_names)
             header.attrs.create('kappa_min', KAPPA_MIN)
-            header.create_dataset('kappa', kappa)
-            header.create_dataset('target_pdf', x_avg)
-            header.create_dataset('cov_pdf', x_cov)
+            header.create_dataset('kappa', data=kappa)
+            header.create_dataset('target_pdf', data=x_avg)
+            header.create_dataset('cov_pdf', data=x_cov)
 
     backend = emcee.backends.HDFBackend(chain_fname)
     if not h5_exists :

@@ -48,7 +48,7 @@ init_hmpdf (hmpdf_obj *d, double zs, int for_cov, const double *params_Arico, in
                         hmpdf_N_phi, 10000,
                         hmpdf_phi_pwr, 5.0,
                         hmpdf_phi_jitter, 0.05,
-                        hmpdf_verbosity, 1);
+                        hmpdf_verbosity, 0);
 
     if (status)
         return status;
