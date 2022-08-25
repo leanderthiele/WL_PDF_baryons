@@ -34,12 +34,15 @@ int main (int argc, char **argv)
 {
     if (argc != 1/*executable*/ + 1/*outfile*/ + hmpdf_Arico20_Nparams)
         return -1;
+    
+    char **c = argv;
 
-    char *outfile = argv[1];
+    char *outfile = *(c++);
+    printf("%s\n", outfile);
 
     double params_Arico[hmpdf_Arico20_Nparams];
     for (int ii=0; ii<hmpdf_Arico20_Nparams; ++ii)
-        params_Arico[ii] = atof(argv[2+ii]);
+        params_Arico[ii] = atof(*(c++));
 
     // some masses are special cases, convert them to h-less units
     const double h = 0.6711; const double logh = log10(h);
