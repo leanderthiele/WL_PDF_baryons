@@ -24,7 +24,7 @@ conc_DM[] = { 5.71, -0.087, -0.47,
               5.92621692e-04, 4.23256450e-01, -7.01235269e+00 };
 
 int
-init_hmpdf (hmpdf_obj *d, double zs, int for_cov, double *params_Arico, int Nz_Arico, double *z_Arico)
+init_hmpdf (hmpdf_obj *d, double zs, int for_cov, const double *params_Arico, int Nz_Arico, const double *z_Arico)
 // If params_Arico == NULL, the DMO version is run
 {
     int status;
@@ -37,11 +37,12 @@ init_hmpdf (hmpdf_obj *d, double zs, int for_cov, double *params_Arico, int Nz_A
                         hmpdf_Arico20_Nz, Nz_Arico,
                         hmpdf_Arico20_z, z_Arico,
                         hmpdf_N_threads, (int)(omp_get_max_threads()),
-                        hmpdf_pixel_side, /*FIXME this is to test convergence*/2.0*0.29,
+                        hmpdf_N_z, 40, /*this should still be accurate enough and fits well with our compute layout*/
+                        hmpdf_pixel_side, 0.29, // TODO make this a hyperparameter?
                         hmpdf_Duffy08_conc_params, conc_DM,
                         hmpdf_custom_k_filter, &k_filter,
                         hmpdf_signal_max, 0.6,
-                        hmpdf_N_theta, 1024,
+                        hmpdf_N_theta, 1024, // TODO will this be too slow?
                         /* for covariance matrix stability */
                         hmpdf_N_signal, (for_cov) ? 512L : 4096L,
                         hmpdf_N_phi, 10000,
