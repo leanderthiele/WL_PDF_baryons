@@ -22,6 +22,17 @@ with h5py.File(chain_fname, 'r') as f :
     print('Accepted:')
     print(f['mcmc/accepted'][...])
 
+# get the theory we don't fit to
+ops = [np.load('/home/lthiele/pdf_baryon/measure_pdfs/ops_for_mcmc_%s_zs1.0341.npz'%s)['ops'] \
+       for s in ['Dark', 'Hydro']]
+kappa = np.load('/home/lthiele/pdf_baryon/measure_pdfs/ops_for_mcmc_Dark_zs1.0341.npz')['kappa']
+MIN_IDX = np.argmin(np.fabs(kappa-KAPPA_MIN))
+kappa = kappa[MIN_IDX:]
+x_all = 2.0 * (ops[1] - ops[0]) / (ops[1] + ops[0]) # shape [subsample, kappa-bin]
+x_avg = np.mean(x_all, axis=0)
+target_res_not_fit = x_avg[:len(x_avg)-len(target_res)]
+target_kappa_not_fit = kappa[:len(x_avg)-len(target_res)]
+
 # get the posterior visually
 reader = emcee.backends.HDFBackend(chain_fname, read_only=True)
 flat_samples = reader.get_chain(flat=True)
@@ -46,7 +57,8 @@ theory_res_bf = 2.0 * (theory_hydro_bf-theory_dmo_bf) / (theory_hydro_bf+theory_
 theory_kappa_edges = np.linspace(0.0, 0.2, num=33)
 theory_kappa = 0.5 * (theory_kappa_edges[1:] + theory_kappa_edges[:-1])
 fig_obs, ax_obs = plt.subplots()
-ax_obs.plot(target_kappa, target_res, label='target')
+l = ax_obs.plot(target_kappa, target_res, label='target')
+ax_obs.plot(target_kappa_not_fit, target_res_not_fit, color=plt.getp(l[0], 'color'), linestyle='dashed')
 ax_obs.plot(theory_kappa, theory_res_bf, label='theory best fit')
 ax_obs.set_xlabel('kappa')
 ax_obs.set_ylabel('2(hydro-DMO)/(hydro+DMO)')
