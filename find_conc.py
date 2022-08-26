@@ -21,7 +21,10 @@ zs = np.loadtxt('./%s_PDF/zs.dat'%SIM)[zs_indices]
 # don't change
 # NOTE: anything before underscore is assumed to uniquely identify the DMO version,
 #       anything after underscore identifies the hydro model
-sims = ['TNG', 'BAHAMAS_fid', 'BAHAMAS_lo', 'BAHAMAS_hi', ]
+sims = ['TNG',
+        'BAHAMAS_fid', 'BAHAMAS_lo', 'BAHAMAS_hi',
+        'BAHAMAShires_fid', 'BAHAMAShires_lo', 'BAHAMAShires_hi',
+       ]
 obss = ['PK', 'QK', 'PK_QK', ]
 
 #sim_DMO   = np.load('kappaTNG_PDF/DMO/PDF_smooth1arcmin.npy')[zs_indices,...]
@@ -33,6 +36,7 @@ if SIM == 'TNG' :
 else :
     # for BAHAMAS, we don't have a BCM realization available I believe
     sim_BCM = None
+
 sim_DMO   = [np.loadtxt('%s_PDF/Dark/op_Dark_zs%.4f.dat'%(SIM, zs[ii]))
              for ii in range(len(zs_indices))]
 sim_hydro = [np.loadtxt('%s_PDF/Hydro/op_Hydro_zs%.4f.dat'%(SIM, zs[ii]))

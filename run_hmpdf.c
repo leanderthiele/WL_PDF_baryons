@@ -4,7 +4,9 @@
 //      [3] file w/ mass cuts (char *)
 //      [4] outfile name      (char *)
 //      [5] hydro             (int)
-//      [6] simulation        (int) -- 0=TNG, 1=BAHAMAS_fid, 2=BAHAMAS_loAGN, 3=BAHAMAS_hiAGN
+//      [6] simulation        (int) -- 0=TNG,
+//                                     1=BAHAMAS_fid, 2=BAHAMAS_loAGN, 3=BAHAMAS_hiAGN
+//                                     4=BAHAMAShires_fid, 5=BAHAMAShires_loAGN, 6=BAHAMAShires_hiAGN
 //      [7] BCM data          (int) -- 0=PK, 1=QK, 2=PK+QK
 
 // If ARICO20 is defined, use the updated 8-parameter BCM
@@ -201,7 +203,7 @@ main(int argc, char **argv)
     char ini_file[64];
     if (sim == TNG)
         sprintf(ini_file, "./illustris_cosmo.ini");
-    else if (sim==BAHAMAS_fid || sim==BAHAMAS_hiAGN || sim==BAHAMAS_loAGN)
+    else
         sprintf(ini_file, "./bahamas_cosmo.ini");
 
     // need to use the function here to be able to have preprocessor directives inside call
@@ -228,7 +230,9 @@ main(int argc, char **argv)
 #endif // SPLIT
 
                    hmpdf_N_threads, 4,
-                   hmpdf_pixel_side, (sim==TNG) ? 0.29 : 0.1*0.882, // == 5 deg / 1024 pixels
+                   hmpdf_pixel_side, (sim==TNG) ? 0.29 // == 5 deg / 1024 pixels
+                                     : (sim>=BAHAMAShires_fid && sim<= BAHAMAShires_hiAGN) ? 0.1666666
+                                     : 0.1*0.882, // hacky BAHAMAS lo-res
 
 #ifndef SPLIT
                    hmpdf_Duffy08_conc_params, (sim==TNG) ? conc_DM : conc_Duffy08,
