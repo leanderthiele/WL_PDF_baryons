@@ -10,6 +10,9 @@ import emcee
 import corner
 import h5py
 
+# burn in
+DISCARD = 100
+
 KAPPA_MIN = float(argv[1])
 OUT_BASE = '/scratch/gpfs/lthiele/BCM_MCMC_TNG_chains_kappamin%.3f'%KAPPA_MIN
 
@@ -19,23 +22,26 @@ with h5py.File(chain_fname, 'r') as f :
     param_names = f['Header'].attrs['parameters']
     target_kappa = f['Header/kappa'][...]
     target_res = f['Header/target_pdf'][...]
+    accepted = f['mcmc/accepted'][...]
     print('Accepted:')
-    print(f['mcmc/accepted'][...])
+    print(accepted)
+    Naccepted = np.sum(accepted)
 
 # get the theory we don't fit to
 ops = [np.load('/home/lthiele/pdf_baryon/measure_pdfs/ops_for_mcmc_%s_zs1.0341.npz'%s)['ops'] \
        for s in ['Dark', 'Hydro']]
 kappa = np.load('/home/lthiele/pdf_baryon/measure_pdfs/ops_for_mcmc_Dark_zs1.0341.npz')['kappa']
-MIN_IDX = np.argmin(np.fabs(kappa-KAPPA_MIN))
-kappa = kappa[MIN_IDX:]
 x_all = 2.0 * (ops[1] - ops[0]) / (ops[1] + ops[0]) # shape [subsample, kappa-bin]
 x_avg = np.mean(x_all, axis=0)
-target_res_not_fit = x_avg[:len(x_avg)-len(target_res)]
-target_kappa_not_fit = kappa[:len(x_avg)-len(target_res)]
+target_res_not_fit = x_avg[:len(x_avg)-len(target_res)+1]
+target_kappa_not_fit = kappa[:len(x_avg)-len(target_res)+1]
 
 # get the posterior visually
 reader = emcee.backends.HDFBackend(chain_fname, read_only=True)
-flat_samples = reader.get_chain(flat=True)
+flat_samples = reader.get_chain(discard=DISCARD, flat=True)
+flat_all_samples = reader.get_chain(flat=True)
+Nsamples = flat_all_samples.shape[0]
+print('Nsamples: %d, acceptance rate: %g'%(Nsamples, Naccepted/Nsamples))
 corner_fig = corner.corner(flat_samples, labels=param_names, plot_datapoints=True)
 corner_fig.savefig('posterior_kappamin%.3f.pdf'%KAPPA_MIN)
 
@@ -63,4 +69,5 @@ ax_obs.plot(theory_kappa, theory_res_bf, label='theory best fit')
 ax_obs.set_xlabel('kappa')
 ax_obs.set_ylabel('2(hydro-DMO)/(hydro+DMO)')
 ax_obs.legend(loc='upper left')
+ax_obs.set_xlim(0,0.2)
 fig_obs.savefig('bestfit_kappamin%.3f.pdf'%KAPPA_MIN, bbox_inches='tight')

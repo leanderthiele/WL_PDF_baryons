@@ -87,7 +87,7 @@ def log_prior (theta) :
 
 
 NUM_STEPS = 0 # changes
-samples_fname = '%s/samples_%.hdf5'%(OUT_BASE, RANK)
+samples_fname = '%s/samples_%d.hdf5'%(OUT_BASE, RANK)
 
 # figure out if previous samples have been written already
 if not os.path.isfile(samples_fname) :
@@ -131,7 +131,7 @@ def log_likelihood (theta) :
     # for the record
     with h5py.File(samples_fname, 'a') as f :
         dset = f.create_dataset('sample_%d'%(NUM_STEPS+NUM_EXISTING),
-                                data=np.stack([theory_dmo, theory_hydro], -1))
+                                data=np.stack([theory_dmo, theory_hydro], 0))
         dset.attrs.create('chisq', chisq)
         dset.attrs.create('runtime', runtime)
         dset.attrs.create('theta', theta)
