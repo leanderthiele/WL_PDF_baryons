@@ -1,6 +1,7 @@
 """ Command line arguments:
 [1] number of walkers (I think should be twice the number of MPI processes)
 [2] minimum kappa (float)
+[3] baryon mode (one of BCM, TOT_CONC, BAR_CONC)
 """
 
 import os
@@ -18,8 +19,13 @@ from schwimmbad import MPIPool
 
 NWALKERS = int(argv[1])
 KAPPA_MIN = float(argv[2])
+BARYON_MODE = argv[3]
 
-OUT_BASE = '/scratch/gpfs/lthiele/BCM_MCMC_TNG_chains_kappamin%.3f'%KAPPA_MIN
+# do not change the order!
+baryon_modes = ['BCM', 'TOT_CONC', 'BAR_CONC', ]
+BARYON_MODE_IDX = baryon_modes.index(BARYON_MODE)
+
+OUT_BASE = '/scratch/gpfs/lthiele/%s_MCMC_TNG_chains_kappamin%.3f'%(BARYON_MODE, KAPPA_MIN)
 os.makedirs(OUT_BASE, exist_ok=True)
 
 RANK = int(os.environ['SLURM_PROCID'])
@@ -39,16 +45,39 @@ x_cov = np.cov(x_all, rowvar=False) / x_all.shape[0]
 x_covinv = np.linalg.inv(x_cov)
 
 # the parameters
-param_names = ['log_M_c', 'log_M_1_z0_cen', 'eta', 'beta',
-               'theta_inn', 'theta_out', 'log_M_inn', 'log_M_r', ]
+if BARYON_MODE == 'BCM' :
+    param_names = ['log_M_c', 'log_M_1_z0_cen', 'eta', 'beta',
+                   'theta_inn', 'theta_out', 'log_M_inn', 'log_M_r', ]
+elif BARYON_MODE in ['TOT_CONC', 'BAR_CONC', ] :
+    param_names = ['A', 'B', 'C',
+                   'd', 'e', 'f', ]
+else :
+    raise NotImplementedError
 
-# fiducial values, from bispectrum fit
-theta_0 = [11.672356390589902, 12.998276528979659, 0.7950988565203113, 3.7422487294724927,
-           0.11559464687549903, 2.2228694416908383, 9.013004910858838, 16.0, ]
+if BARYON_MODE == 'BCM' :
+    # fiducial values, from bispectrum fit
+    theta_0 = [11.672356390589902, 12.998276528979659, 0.7950988565203113, 3.7422487294724927,
+               0.11559464687549903, 2.2228694416908383, 9.013004910858838, 16.0, ]
+# the following come from profile fits
+elif BARYON_MODE == 'TOT_CONC' :
+    theta_0 = [1.375023001e+01, -8.688706e-02, -8.4451454e-01,
+               2.705265e-02, 5.2513069e-01, 1.12049399e+00, ]
+elif BARYON_MODE == 'BAR_CONC' :
+    # note theta_0[4] is outside of prior here, not a problem...
+    theta_0 = [4.57478936e+00, -1.67755068e+00, -2.84129704e+00,
+               4.90993037e-04, -1.16223295e+01, -6.83565016e+00, ]
+    
 
 # prior ranges, we'll also use these to initialize the chains as we don't really have much information
-theta_priors = [(9.0, 13.0), (9.0, 15.0), (0.1, 3.0), (0.5, 5.0),
-                (0.05, 0.5), (0.5, 3.0), (8.0, 15.0), (13.0, 18.0), ]
+if BARYON_MODE == 'BCM' :
+    theta_priors = [(9.0, 13.0), (9.0, 15.0), (0.1, 3.0), (0.5, 5.0),
+                    (0.05, 0.5), (0.5, 3.0), (8.0, 15.0), (13.0, 18.0), ]
+elif BARYON_MODE == 'TOT_CONC' :
+    theta_priors = [(8.0, 16.0), (-0.2, 0.0), (-3.0, 0.0),
+                    (0.0, 0.1), (0.0, 1.0), (-10.0, 10.0), ]
+elif BARYON_MODE == 'BAR_CONC' :
+    theta_priors = [(0.1, 16.0), (-5.0, 0.0), (-3.0, 0.0),
+                    (0.0, 0.1), (-20.0, 0.0), (-10.0, 10.0), ]
 
 def log_prior (theta) :
     for t, p in zip(theta, theta_priors) :
@@ -79,7 +108,7 @@ def log_likelihood (theta) :
 
     binary = './run_hmpdf'
 
-    args = [binary, fname, *map(lambda x: '%g'%x, theta)]
+    args = [binary, fname, str(BARYON_MODE_IDX), *map(lambda x: '%g'%x, theta)]
 
     start = time()
     returned = subprocess.run(args)
