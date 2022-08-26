@@ -13,8 +13,12 @@ RECOMPUTE = bool(int(argv[1])) if len(argv)>1 else True
 # TODO
 if SIM == 'TNG' :
     zs_indices = [12, 22, 34]
-else :
+elif SIM.startswith('BAHAMAShires') :
+    zs_indices = [0, ]
+elif SIM.startswith('BAHAMAS_') :
     zs_indices = [0, 1, 2]
+else :
+    raise RuntimeError
 
 zs = np.loadtxt('./%s_PDF/zs.dat'%SIM)[zs_indices]
 
