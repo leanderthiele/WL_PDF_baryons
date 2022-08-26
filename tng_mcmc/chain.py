@@ -18,7 +18,6 @@ from schwimmbad import MPIPool
 
 NWALKERS = int(argv[1])
 KAPPA_MIN = float(argv[2])
-WRITE_PERIOD = 10 # after this many likelihood evaluations the chisq is written to file
 
 OUT_BASE = '/scratch/gpfs/lthiele/BCM_MCMC_TNG_chains_kappamin%.3f'%KAPPA_MIN
 os.makedirs(OUT_BASE, exist_ok=True)
@@ -59,9 +58,16 @@ def log_prior (theta) :
 
 
 NUM_STEPS = 0 # changes
-txt_fname = '%s/info_%d.dat'%(OUT_BASE, RANK)
-chisq_arr = np.full(WRITE_PERIOD, -1.0)
-time_arr = np.full(WRITE_PERIOD, -1.0)
+samples_fname = '%s/samples_%.hdf5'%(OUT_BASE, RANK)
+
+# figure out if previous samples have been written already
+if not os.path.isfile(samples_fname) :
+    NUM_EXISTING = 0
+else :
+    with h5py.File(samples_fname, 'r') as f :
+        dsets = list(f.keys())
+    dsets = list(filter(lambda s: s.startswith('sample_'), dsets))
+    NUM_EXISTING = len(dsets)
 
 def log_likelihood (theta) :
 
@@ -84,20 +90,24 @@ def log_likelihood (theta) :
         raise RuntimeError
 
     theory_dmo, theory_hydro = np.loadtxt(fname, unpack=True)
+
+    os.remove(fname) # don't crash the file system
+
     x_theory = 2.0 * (theory_hydro-theory_dmo) / (theory_hydro+theory_dmo)
     x_theory = x_theory[MIN_IDX:]
 
     delta_x = x_theory - x_avg
     chisq = np.einsum('i,ij,j->', delta_x, x_covinv, delta_x)
 
-    idx_in_arrs = NUM_STEPS % WRITE_PERIOD
-    chisq_arr[idx_in_arrs] = chisq
-    time_arr[idx_in_arrs] = runtime
+    # for the record
+    with h5py.File(samples_fname, 'a') as f :
+        dset = f.create_dataset('sample_%d'%(NUM_STEPS+NUM_EXISTING),
+                                data=np.stack([theory_dmo, theory_hydro], -1))
+        dset.attrs.create('chisq', chisq)
+        dset.attrs.create('runtime', runtime)
+        dset.attrs.create('theta', theta)
 
     NUM_STEPS += 1
-    if NUM_STEPS % WRITE_PERIOD == 0 :
-        with open(txt_fname, 'a') as f :
-            np.savetxt(f, np.stack([chisq_arr, time_arr], -1), header='chisq time[sec]')
 
     return -0.5 * chisq
 

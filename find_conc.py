@@ -5,8 +5,8 @@ from sys import argv
 
 from scipy.interpolate import interp1d
 
-SIM = 'TNG'
-OBS = 'QK' # only relevant for Arico20 BCM
+SIM = 'BAHAMAShires_fid'
+OBS = 'PK' # only relevant for Arico20 BCM
 
 RECOMPUTE = bool(int(argv[1])) if len(argv)>1 else True
 
@@ -20,7 +20,7 @@ elif SIM.startswith('BAHAMAS_') :
 else :
     raise RuntimeError
 
-zs = np.loadtxt('./%s_PDF/zs.dat'%SIM)[zs_indices]
+zs = np.atleast_1d(np.loadtxt('./%s_PDF/zs.dat'%SIM))[zs_indices]
 
 # don't change
 # NOTE: anything before underscore is assumed to uniquely identify the DMO version,
@@ -111,6 +111,8 @@ for ii, zsource in enumerate(zs) :
 fig_res, ax_res = plt.subplots()
 
 fig_log, ax_log = plt.subplots(ncols=len(zs_indices))
+if len(zs_indices) == 1 :
+    ax_log = np.array([ax_log, ])
 ax_log = ax_log.flatten()
 
 for ii, zsource in enumerate(zs) :
