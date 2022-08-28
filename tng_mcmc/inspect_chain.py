@@ -1,5 +1,6 @@
 # Command line arguments:
-# [1] kappa_min
+# [1] baryon mode
+# [2] kappa_min
 
 from sys import argv
 from glob import glob
@@ -13,8 +14,9 @@ import h5py
 # burn in
 DISCARD = 100
 
-KAPPA_MIN = float(argv[1])
-OUT_BASE = '/scratch/gpfs/lthiele/BCM_MCMC_TNG_chains_kappamin%.3f'%KAPPA_MIN
+BARYON_MODE = argv[1]
+KAPPA_MIN = float(argv[2])
+OUT_BASE = '/scratch/gpfs/lthiele/%s_MCMC_TNG_chains_kappamin%.3f'%(BARYON_MODE, KAPPA_MIN)
 
 chain_fname = '%s/chain.hdf5'%OUT_BASE
 
@@ -43,22 +45,26 @@ flat_all_samples = reader.get_chain(flat=True)
 Nsamples = flat_all_samples.shape[0]
 print('Nsamples: %d, acceptance rate: %g'%(Nsamples, Naccepted/Nsamples))
 corner_fig = corner.corner(flat_samples, labels=param_names, plot_datapoints=True)
-corner_fig.savefig('posterior_kappamin%.3f.pdf'%KAPPA_MIN)
+corner_fig.savefig('posterior_%s_kappamin%.3f.pdf'%(BARYON_MODE, KAPPA_MIN))
 
 # get the best fit
-nprocs = len(glob('%s/info_*.dat'%OUT_BASE))
+nprocs = len(glob('%s/samples_*.hdf5'%OUT_BASE))
 print('Found output from %d processes'%nprocs)
 min_chisq = np.inf
 best_proc = None
 best_idx = None
 for ii in range(1, nprocs) : # process 0 is not contibuting!
-    chisq = np.loadtxt('%s/info_%d.dat'%(OUT_BASE, ii), usecols=(0,))
+    with h5py.File('%s/samples_%d.hdf5'%(OUT_BASE, ii), 'r') as f :
+        chisq = np.array([f[d].attrs['chisq'] for d in sorted(f.keys(), key=lambda s: s.split('_')[1])])
     if np.min(chisq) < min_chisq :
         best_proc = ii
         best_idx = np.argmin(chisq)
         min_chisq = np.min(chisq)
 print('Best fit chisquared = %g'%min_chisq)
-theory_dmo_bf, theory_hydro_bf = np.loadtxt('%s/sample_%d_%d'%(OUT_BASE, best_proc, best_idx), unpack=True)
+with h5py.File('%s/samples_%d.hdf5'%(OUT_BASE, best_proc), 'r') as f :
+    d = f['sample_%d'%best_idx]
+    theory_dmo_bf, theory_hydro_bf = d[...]
+    theta_bf = d.attrs['theta']
 theory_res_bf = 2.0 * (theory_hydro_bf-theory_dmo_bf) / (theory_hydro_bf+theory_dmo_bf)
 theory_kappa_edges = np.linspace(0.0, 0.2, num=33)
 theory_kappa = 0.5 * (theory_kappa_edges[1:] + theory_kappa_edges[:-1])
@@ -70,4 +76,4 @@ ax_obs.set_xlabel('kappa')
 ax_obs.set_ylabel('2(hydro-DMO)/(hydro+DMO)')
 ax_obs.legend(loc='upper left')
 ax_obs.set_xlim(0,0.2)
-fig_obs.savefig('bestfit_kappamin%.3f.pdf'%KAPPA_MIN, bbox_inches='tight')
+fig_obs.savefig('bestfit_%s_kappamin%.3f.pdf'%(BARYON_MODE, KAPPA_MIN), bbox_inches='tight')
