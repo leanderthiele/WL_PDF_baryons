@@ -4,6 +4,8 @@
 #include <math.h>
 #include <omp.h>
 
+#include <gsl/gsl_math.h>
+
 #include "hmpdf.h"
 
 #define ARICO20
@@ -39,6 +41,24 @@ conc_hydro_DM[] = { 5.71, -0.087, -0.47,
                     1.29506089e+01, -8.866189e-02, -8.6722558e-02,
                     2.486489e-02, 5.510048e-01, 1.11423926e+00 };
 
+// the following for the NFW-only baryonic correction
+static double
+mass_resc_params[] = { -0.14246705, -0.7154184,  -0.52396824,  1.17713498 };
+
+double
+mass_resc(double z, double M, void *p)
+{
+    (void)p;
+    M = log(M/2e12);
+    double out = 1.0 + mass_resc_params[0]
+                       * pow(1.0+z, mass_resc_params[1])
+                       * exp( mass_resc_params[2]
+                             * gsl_pow_2(M - mass_resc_params[3]) );
+
+    return out;
+}
+
+
 int
 init_hmpdf (hmpdf_obj *d, double zs, int for_cov, enum BARYON_MODES baryon_mode,
             const double *params, int Nz_Arico, const double *z_Arico)
@@ -68,6 +88,7 @@ init_hmpdf (hmpdf_obj *d, double zs, int for_cov, enum BARYON_MODES baryon_mode,
                         hmpdf_Duffy08_conc_params, (baryon_mode==TOT_CONC) ? conc_params : conc_DM,
                         hmpdf_DM_conc_params, (baryon_mode==BAR_CONC) ? conc_hydro_DM : NULL,
                         hmpdf_bar_conc_params, (baryon_mode==BAR_CONC) ? conc_params : NULL,
+                        hmpdf_mass_resc, (baryon_mode==TOT_CONC || baryon_mode==BAR_CONC) ? &mass_resc : NULL,
                         /* end baryon stuff */
 
                         hmpdf_N_threads, (int)(omp_get_max_threads()),

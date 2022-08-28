@@ -180,7 +180,10 @@ with MPIPool() as pool :
     if not h5_exists :
         backend.reset(NWALKERS, ndim)
 
+    # we make the move scaling parameter a bit smaller than default because
+    # otherwise acceptance rate is on the low side
     sampler = emcee.EnsembleSampler(NWALKERS, ndim, log_probability,
-                                    pool=pool, backend=backend)
+                                    pool=pool, backend=backend,
+                                    moves=emcee.moves.StretchMove(a=1.5))
 
     sampler.run_mcmc(None if h5_exists else initial, 100000)
