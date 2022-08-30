@@ -73,10 +73,11 @@ if BARYON_MODE == 'BCM' :
     theta_priors = [(9.0, 13.0), (9.0, 15.0), (0.1, 3.0), (0.5, 5.0),
                     (0.05, 0.5), (0.5, 3.0), (8.0, 15.0), (13.0, 18.0), ]
 elif BARYON_MODE == 'TOT_CONC' :
-    theta_priors = [(8.0, 16.0), (-0.2, 0.0), (-3.0, 0.0),
-                    (0.0, 0.1), (0.0, 1.0), (-10.0, 10.0), ]
+    # adapted these after first run because the initial priors were not perfect
+    theta_priors = [(4.0, 12.0), (-0.14, 0.2), (-2.0, 0.5),
+                    (0.0, 0.15), (-1.0, 2.0), (-5.0, 5.0), ]
 elif BARYON_MODE == 'BAR_CONC' :
-    theta_priors = [(0.1, 16.0), (-5.0, 0.0), (-3.0, 0.0),
+    theta_priors = [(0.1, 16.0), (-5.0, 2.0), (-3.0, 2.0),
                     (0.0, 0.1), (-20.0, 0.0), (-10.0, 10.0), ]
 
 def log_prior (theta) :

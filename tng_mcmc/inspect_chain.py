@@ -14,7 +14,7 @@ import h5py
 # burn in
 DISCARD = 100
 
-BARYON_MODE = argv[1]
+BARYON_MODE = argv[1].upper()
 KAPPA_MIN = float(argv[2])
 OUT_BASE = '/scratch/gpfs/lthiele/%s_MCMC_TNG_chains_kappamin%.3f'%(BARYON_MODE, KAPPA_MIN)
 
