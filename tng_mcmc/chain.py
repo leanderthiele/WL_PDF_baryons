@@ -2,6 +2,7 @@
 [1] number of walkers (I think should be twice the number of MPI processes)
 [2] minimum kappa (float)
 [3] baryon mode (one of BCM, TOT_CONC, BAR_CONC)
+[4] simulation, one of (TNG, BAHAMAS_fid, BAHAMAS_lo, BAHAMAS_hi)
 """
 
 import os
@@ -20,21 +21,28 @@ from schwimmbad import MPIPool
 NWALKERS = int(argv[1])
 KAPPA_MIN = float(argv[2])
 BARYON_MODE = argv[3]
+SIM = argv[4]
 
 # do not change the order!
 baryon_modes = ['BCM', 'TOT_CONC', 'BAR_CONC', ]
 BARYON_MODE_IDX = baryon_modes.index(BARYON_MODE)
 
-OUT_BASE = '/scratch/gpfs/lthiele/%s_MCMC_TNG_chains_kappamin%.3f'%(BARYON_MODE, KAPPA_MIN)
+OUT_BASE = '/scratch/gpfs/lthiele/%s_MCMC_%s_chains_kappamin%.3f'%(BARYON_MODE, SIM, KAPPA_MIN)
 os.makedirs(OUT_BASE, exist_ok=True)
 
 RANK = int(os.environ['SLURM_PROCID'])
 WORLD_SIZE = int(os.environ['SLURM_NTASKS'])
 
 # load the target, shape [[Dark, Hydro], subsample, kappa-bin]
-ops = [np.load('/home/lthiele/pdf_baryon/measure_pdfs/ops_for_mcmc_%s_zs1.0341.npz'%s)['ops'] \
-       for s in ['Dark', 'Hydro']]
-kappa = np.load('/home/lthiele/pdf_baryon/measure_pdfs/ops_for_mcmc_Dark_zs1.0341.npz')['kappa']
+if SIM == 'TNG' :
+    ops = [np.load('/home/lthiele/pdf_baryon/measure_pdfs/ops_for_mcmc_%s_zs1.0341.npz'%s)['ops'] \
+           for s in ['Dark', 'Hydro']]
+    kappa = np.load('/home/lthiele/pdf_baryon/measure_pdfs/ops_for_mcmc_Dark_zs1.0341.npz')['kappa']
+else :
+    assert SIM.split('_')[0] == 'BAHAMAS'
+    ops = [np.load('/home/lthiele/pdf_baryon/BAHAMAS/ops_for_mcmc_%s_zs1.0000.npz'%s)['ops'] \
+           for s in ['DMO', 'hydro_%s'%SIM.split('_')[1]]]
+    kappa = np.load('/home/lthiele/pdf_baryon/BAHAMAS/ops_for_mcmc_DMO_zs1.0000.npz')['kappa']
 MIN_IDX = np.argmin(np.fabs(kappa-KAPPA_MIN))
 kappa = kappa[MIN_IDX:]
 x_all = 2.0 * (ops[1] - ops[0]) / (ops[1] + ops[0]) # shape [subsample, kappa-bin]
