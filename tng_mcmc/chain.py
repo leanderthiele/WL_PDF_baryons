@@ -27,6 +27,10 @@ SIM = argv[4]
 baryon_modes = ['BCM', 'TOT_CONC', 'BAR_CONC', ]
 BARYON_MODE_IDX = baryon_modes.index(BARYON_MODE)
 
+# do not change the order
+sims = ['TNG', 'BAHAMAS', ]
+SIM_IDX = sims.index(SIM.split('_')[0])
+
 OUT_BASE = '/scratch/gpfs/lthiele/%s_MCMC_%s_chains_kappamin%.3f'%(BARYON_MODE, SIM, KAPPA_MIN)
 os.makedirs(OUT_BASE, exist_ok=True)
 
@@ -117,7 +121,7 @@ def log_likelihood (theta) :
 
     binary = './run_hmpdf'
 
-    args = [binary, fname, str(BARYON_MODE_IDX), *map(lambda x: '%g'%x, theta)]
+    args = [binary, fname, str(BARYON_MODE_IDX), str(SIM_IDX), *map(lambda x: '%g'%x, theta)]
 
     start = time()
     returned = subprocess.run(args)

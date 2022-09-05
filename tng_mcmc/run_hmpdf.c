@@ -1,6 +1,7 @@
 /* Command line arguments:
  * [1] output file ... will be a text file with the first column DMO and the second column hydro
  * [2] baryonic correction mode ... integer, 0...BCM, 1...TOT_CONC, 2...BAR_CONC
+ * [3] simulation ... integer, 0...TNG, 1...BAHAMAS
  * If [2]==BCM :
  *     Now the Arico20 parameters (all floating point numbers):
  *     [ 3] M_c
@@ -40,8 +41,9 @@ int main (int argc, char **argv)
 
     char *outfile = *(c++);
     enum BARYON_MODES baryon_mode = atoi(*(c++));
+    enum SIMS sim = atoi(*(c++));
 
-    if (argc != 1/*executable*/+1/*outfile*/+1/*baryon mode*/
+    if (argc != 1/*executable*/+1/*outfile*/+1/*baryon mode*/+1/*simulation*/
                 +((baryon_mode==BCM) ? hmpdf_Arico20_Nparams : 6)/*theta*/)
         return -1;
 
@@ -76,7 +78,7 @@ int main (int argc, char **argv)
         int status;
         // TODO maybe make pixel side or something in the k-filter a hyperparameter too?
         // I think we have concluded this is a bad idea because it would destroy the DMO fit
-        status = init_hmpdf(d, zs, /*for_cov=*/0, /*baryon_mode=*/(hydro) ? baryon_mode : DMO,
+        status = init_hmpdf(d, zs, /*for_cov=*/0, /*baryon_mode=*/(hydro) ? baryon_mode : DMO, sim,
                            (hydro) ? theta : NULL, Nz_Arico, z_Arico);
         if (status) return 2;
 

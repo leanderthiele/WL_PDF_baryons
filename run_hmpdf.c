@@ -231,7 +231,7 @@ main(int argc, char **argv)
 
                    hmpdf_N_threads, 4,
                    hmpdf_pixel_side, (sim==TNG) ? 0.29 // == 5 deg / 1024 pixels
-                                     : (sim>=BAHAMAShires_fid && sim<= BAHAMAShires_hiAGN) ? 0.1666666
+                                     : (sim>=BAHAMAShires_fid && sim<= BAHAMAShires_hiAGN) ? 0.5*0.1666666
                                      : 0.1*0.882, // hacky BAHAMAS lo-res
 
 #ifndef SPLIT

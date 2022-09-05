@@ -19,6 +19,12 @@ enum BARYON_MODES {
                     DMO, // no baryonic correction
                   };
 
+// the different simulations
+enum SIMS {
+           TNG,
+           BAHAMAS,
+          };
+
 double
 k_filter(double k, double z, void *p)
 {
@@ -60,7 +66,8 @@ mass_resc(double z, double M, void *p)
 
 
 int
-init_hmpdf (hmpdf_obj *d, double zs, int for_cov, enum BARYON_MODES baryon_mode,
+init_hmpdf (hmpdf_obj *d, double zs, int for_cov,
+            enum BARYON_MODES baryon_mode, enum SIMS sim,
             const double *params, int Nz_Arico, const double *z_Arico)
 {
     int status;
@@ -76,7 +83,7 @@ init_hmpdf (hmpdf_obj *d, double zs, int for_cov, enum BARYON_MODES baryon_mode,
             *(p++) = params[ii]; // these are the important concentration parameters
     }
 
-    status = hmpdf_init(d, "illustris_cosmo.ini",
+    status = hmpdf_init(d, (sim==TNG) ? "illustris_cosmo.ini" : "bahamas_cosmo.ini",
                         hmpdf_kappa, zs,
                         hmpdf_rout_scale, 2.5,
                         hmpdf_gaussian_fwhm, 2.0 * sqrt(M_LN2),
@@ -93,9 +100,8 @@ init_hmpdf (hmpdf_obj *d, double zs, int for_cov, enum BARYON_MODES baryon_mode,
 
                         hmpdf_N_threads, (int)(omp_get_max_threads()),
                         hmpdf_N_z, 40, /*this should still be accurate enough and fits well with our compute layout*/
-                        hmpdf_pixel_side, 0.29, // TODO make this a hyperparameter?
-                                                // rather not because otherwise we may compromise DMO fit
-                        hmpdf_custom_k_filter, &k_filter,
+                        hmpdf_pixel_side, (sim==TNG) ? 0.29 : 0.5*0.16666667, // BAHAMAS value chosen by looking at DMO
+                        hmpdf_custom_k_filter, (sim==TNG) ? &k_filter : NULL,
                         hmpdf_signal_max, 0.6,
                         hmpdf_N_theta, 1024, // TODO will this be too slow?
                         /* for covariance matrix stability */
