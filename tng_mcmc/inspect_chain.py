@@ -1,7 +1,8 @@
-# Command line arguments:
-# [1] baryon mode
-# [2] sim (TNG, BAHAMAS_fid, BAHAMAS_lo, BAHAMAS_hi)
-# [3] kappa_min
+""" Command line arguments:
+    [1] baryon mode
+    [2] sim (TNG, BAHAMAS_fid, BAHAMAS_lo, BAHAMAS_hi)
+    [3] kappa_min
+"""
 
 from sys import argv
 from glob import glob
@@ -15,9 +16,13 @@ import h5py
 # burn in
 DISCARD = 100
 
-BARYON_MODE = argv[1].upper()
-SIM = argv[2]
-KAPPA_MIN = float(argv[3])
+try :
+    BARYON_MODE = argv[1].upper()
+    SIM = argv[2]
+    KAPPA_MIN = float(argv[3])
+except Exception :
+    print(__doc__)
+    raise
 OUT_BASE = '/scratch/gpfs/lthiele/%s_MCMC_%s_chains_kappamin%.3f'%(BARYON_MODE, SIM, KAPPA_MIN)
 
 chain_fname = '%s/chain.hdf5'%OUT_BASE
@@ -32,9 +37,14 @@ with h5py.File(chain_fname, 'r') as f :
     Naccepted = np.sum(accepted)
 
 # get the theory we don't fit to
-ops = [np.load('/home/lthiele/pdf_baryon/measure_pdfs/ops_for_mcmc_%s_zs1.0341.npz'%s)['ops'] \
-       for s in ['Dark', 'Hydro']]
-kappa = np.load('/home/lthiele/pdf_baryon/measure_pdfs/ops_for_mcmc_Dark_zs1.0341.npz')['kappa']
+if SIM == 'TNG' :
+    ops = [np.load('/home/lthiele/pdf_baryon/measure_pdfs/ops_for_mcmc_%s_zs1.0341.npz'%s)['ops'] \
+           for s in ['Dark', 'Hydro']]
+    kappa = np.load('/home/lthiele/pdf_baryon/measure_pdfs/ops_for_mcmc_Dark_zs1.0341.npz')['kappa']
+else :
+    ops = [np.load('/home/lthiele/pdf_baryon/BAHAMAS/ops_for_mcmc_%s_zs1.0000.npz'%s)['ops'] \
+           for s in ['DMO', 'hydro_'+SIM.split('_')[-1]]]
+    kappa = np.load('/home/lthiele/pdf_baryon/BAHAMAS/ops_for_mcmc_DMO_zs1.0000.npz')['kappa']
 x_all = 2.0 * (ops[1] - ops[0]) / (ops[1] + ops[0]) # shape [subsample, kappa-bin]
 x_avg = np.mean(x_all, axis=0)
 target_res_not_fit = x_avg[:len(x_avg)-len(target_res)+1]
@@ -47,7 +57,7 @@ flat_all_samples = reader.get_chain(flat=True)
 Nsamples = flat_all_samples.shape[0]
 print('Nsamples: %d, acceptance rate: %g'%(Nsamples, Naccepted/Nsamples))
 corner_fig = corner.corner(flat_samples, labels=param_names, plot_datapoints=True)
-corner_fig.savefig('posterior_%s_kappamin%.3f.pdf'%(BARYON_MODE, KAPPA_MIN))
+corner_fig.savefig('posterior_%s_%s_kappamin%.3f.pdf'%(BARYON_MODE, SIM, KAPPA_MIN))
 
 # get the best fit
 nprocs = len(glob('%s/samples_*.hdf5'%OUT_BASE))
@@ -78,4 +88,4 @@ ax_obs.set_xlabel('kappa')
 ax_obs.set_ylabel('2(hydro-DMO)/(hydro+DMO)')
 ax_obs.legend(loc='upper left')
 ax_obs.set_xlim(0,0.2)
-fig_obs.savefig('bestfit_%s_kappamin%.3f.pdf'%(BARYON_MODE, KAPPA_MIN), bbox_inches='tight')
+fig_obs.savefig('bestfit_%s_%s_kappamin%.3f.pdf'%(BARYON_MODE, SIM, KAPPA_MIN), bbox_inches='tight')
