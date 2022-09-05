@@ -1,6 +1,7 @@
 # Command line arguments:
 # [1] baryon mode
-# [2] kappa_min
+# [2] sim (TNG, BAHAMAS_fid, BAHAMAS_lo, BAHAMAS_hi)
+# [3] kappa_min
 
 from sys import argv
 from glob import glob
@@ -15,8 +16,9 @@ import h5py
 DISCARD = 100
 
 BARYON_MODE = argv[1].upper()
-KAPPA_MIN = float(argv[2])
-OUT_BASE = '/scratch/gpfs/lthiele/%s_MCMC_TNG_chains_kappamin%.3f'%(BARYON_MODE, KAPPA_MIN)
+SIM = argv[2]
+KAPPA_MIN = float(argv[3])
+OUT_BASE = '/scratch/gpfs/lthiele/%s_MCMC_%s_chains_kappamin%.3f'%(BARYON_MODE, SIM, KAPPA_MIN)
 
 chain_fname = '%s/chain.hdf5'%OUT_BASE
 
