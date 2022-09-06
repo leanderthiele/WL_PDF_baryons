@@ -13,9 +13,6 @@ import emcee
 import corner
 import h5py
 
-# burn in
-DISCARD = 100
-
 try :
     BARYON_MODE = argv[1].upper()
     SIM = argv[2]
@@ -24,6 +21,9 @@ except Exception :
     print(__doc__)
     raise
 OUT_BASE = '/scratch/gpfs/lthiele/%s_MCMC_%s_chains_kappamin%.3f'%(BARYON_MODE, SIM, KAPPA_MIN)
+
+# burn in
+DISCARD = 0 if BARYON_MODE=='BCM' else 100
 
 chain_fname = '%s/chain.hdf5'%OUT_BASE
 
