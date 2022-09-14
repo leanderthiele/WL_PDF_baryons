@@ -36,7 +36,6 @@ with h5py.File(chain_fname, 'r') as f :
     print(accepted)
     Naccepted = np.sum(accepted)
 
-# get the theory we don't fit to
 if SIM == 'TNG' :
     ops = [np.load('/home/lthiele/pdf_baryon/measure_pdfs/ops_for_mcmc_%s_zs1.0341.npz'%s)['ops'] \
            for s in ['Dark', 'Hydro']]
@@ -47,6 +46,7 @@ else :
     kappa = np.load('/home/lthiele/pdf_baryon/BAHAMAS/ops_for_mcmc_DMO_zs1.0000.npz')['kappa']
 x_all = 2.0 * (ops[1] - ops[0]) / (ops[1] + ops[0]) # shape [subsample, kappa-bin]
 x_avg = np.mean(x_all, axis=0)
+# get the theory we don't fit to
 target_res_not_fit = x_avg[:len(x_avg)-len(target_res)+1]
 target_kappa_not_fit = kappa[:len(x_avg)-len(target_res)+1]
 
