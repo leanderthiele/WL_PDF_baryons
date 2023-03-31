@@ -86,7 +86,9 @@ if BARYON_MODE == 'BCM' :
                     (0.05, 0.5), (0.5, 3.0), (8.0, 15.0), (13.0, 18.0), ]
 elif BARYON_MODE == 'TOT_CONC' :
     # adapted these after first run because the initial priors were not perfect
-    theta_priors = [(4.0, 12.0), (-0.14, 0.2), (-2.0, 0.5),
+    theta_priors = [(4.0, 12.0) if SIM=='TNG' else (11.0, 25.0),
+                    (-0.14, 0.2) if SIM=='TNG' else (-0.5, 0.0),
+                                              (-2.0, 0.5),
                     (0.0, 0.15), (-1.0, 2.0), (-5.0, 5.0), ]
 elif BARYON_MODE == 'BAR_CONC' :
     theta_priors = [(0.1, 16.0), (-5.0, 2.0), (-3.0, 2.0),
