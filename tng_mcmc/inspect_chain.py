@@ -77,6 +77,7 @@ with h5py.File('%s/samples_%d.hdf5'%(OUT_BASE, best_proc), 'r') as f :
     d = f['sample_%d'%best_idx]
     theory_dmo_bf, theory_hydro_bf = d[...]
     theta_bf = d.attrs['theta']
+print('theta_bf=', theta_bf)
 theory_res_bf = 2.0 * (theory_hydro_bf-theory_dmo_bf) / (theory_hydro_bf+theory_dmo_bf)
 theory_kappa_edges = np.linspace(0.0, 0.2, num=33)
 theory_kappa = 0.5 * (theory_kappa_edges[1:] + theory_kappa_edges[:-1])

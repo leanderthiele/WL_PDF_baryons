@@ -5,6 +5,8 @@
 [4] simulation, one of (TNG, BAHAMAS_fid, BAHAMAS_lo, BAHAMAS_hi)
 """
 
+ZS = '1.9889'
+
 import os
 import os.path
 import sys
@@ -31,7 +33,7 @@ BARYON_MODE_IDX = baryon_modes.index(BARYON_MODE)
 sims = ['TNG', 'BAHAMAS', ]
 SIM_IDX = sims.index(SIM.split('_')[0])
 
-OUT_BASE = '/scratch/gpfs/lthiele/%s_MCMC_%s_chains_kappamin%.3f'%(BARYON_MODE, SIM, KAPPA_MIN)
+OUT_BASE = '/scratch/gpfs/lthiele/%s_MCMC_%s_chains_kappamin%.3f_zs%s'%(BARYON_MODE, SIM, KAPPA_MIN, ZS)
 os.makedirs(OUT_BASE, exist_ok=True)
 
 RANK = int(os.environ['SLURM_PROCID'])
@@ -39,10 +41,11 @@ WORLD_SIZE = int(os.environ['SLURM_NTASKS'])
 
 # load the target, shape [[Dark, Hydro], subsample, kappa-bin]
 if SIM == 'TNG' :
-    ops = [np.load('/home/lthiele/pdf_baryon/measure_pdfs/ops_for_mcmc_%s_zs1.0341.npz'%s)['ops'] \
+    ops = [np.load('/home/lthiele/pdf_baryon/measure_pdfs/ops_for_mcmc_%s_zs%s.npz'%(s, ZS))['ops'] \
            for s in ['Dark', 'Hydro']]
-    kappa = np.load('/home/lthiele/pdf_baryon/measure_pdfs/ops_for_mcmc_Dark_zs1.0341.npz')['kappa']
+    kappa = np.load('/home/lthiele/pdf_baryon/measure_pdfs/ops_for_mcmc_Dark_zs%s.npz'%ZS)['kappa']
 else :
+    raise RuntimeError
     assert SIM.split('_')[0] == 'BAHAMAS'
     ops = [np.load('/home/lthiele/pdf_baryon/BAHAMAS/ops_for_mcmc_%s_zs1.0000.npz'%s)['ops'] \
            for s in ['DMO', 'hydro_%s'%SIM.split('_')[1]]]
